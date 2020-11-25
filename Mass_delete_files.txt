@@ -1,0 +1,21 @@
+##############################
+###### mass delete files #####
+##############################
+
+folders <- list.dirs(path = "/Users/coleenthompson/Desktop/test_vertdata", full.names = F, recursive = F)
+
+#loop through speies folders
+for (f in folders) {
+  
+  #change to species f directory
+  dir<-(paste("/Users/coleenthompson/Desktop/test_vertdata/",f,sep=""))
+  setwd(dir)
+  
+  #continue running code despite errors
+  tryCatch({
+  
+  #delete temp files 
+  delete.temp<- Sys.glob("*outside.txt") 
+  file.remove(delete.temp)
+  }, error=function(e){ print("no individuals in or out")} )
+}

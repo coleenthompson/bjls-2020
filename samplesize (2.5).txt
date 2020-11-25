@@ -1,0 +1,75 @@
+###########################
+##### sample size #########
+###########################
+library(readr)
+library(ape)
+
+#list all species folders
+folders <- list.dirs(path = "/Users/coleenthompson/Desktop/test_vertdata", full.names = F, recursive = F)
+
+#loop through speies folders
+for (f in folders) {
+  
+  #change to species f directory
+  dir<-(paste("/Users/coleenthompson/Desktop/test_vertdata/",f,sep=""))
+  setwd(dir)
+  
+  #continue running code despite errors
+  tryCatch({
+  
+  #delete temp files 
+  #delete.temp<- Sys.glob("*temp.fas") 
+  #file.remove(delete.temp)
+  
+  #get list of genes 
+  gene_list_true<-Sys.glob("TRUE*.fas")
+  gene_list_false<-Sys.glob("FALSE*.fas")
+  
+  #loop through fasta files
+  count = 1
+  genelist <- list()
+  for (g in 1:length(gene_list_true)) {
+    if (count == 1){
+      fasta_TRUE<-read.FASTA(gene_list_true[g])
+      genename <- strsplit(gene_list_true[g],'_')[[1]][2]
+      df <- data.frame(genename, NA, NA)
+      names(df) <- c('gene', 'n_inside', 'n_outside')
+      n_in<-length(fasta_TRUE)
+      df$n_inside <- ifelse(df$gene == genename, n_in, df$n_inside)
+      genelist <- c(genelist, genename)
+      count = 2
+    }
+      else{
+        genename <- strsplit(gene_list_true[g],'_')[[1]][2]
+        fasta_TRUE<-read.FASTA(gene_list_true[g])
+        n_in<-length(fasta_TRUE)
+        levels(df$gene) <- c(levels(df$gene), genename)
+        df <- rbind(df, c(gene= genename, n_inside = NA,n_outside = NA))
+        df$n_inside <- ifelse(df$gene == genename, n_in, df$n_inside)
+        genelist <- c(genelist, genename)
+      }
+  }	 
+  for (g in 1:length(gene_list_false)) {
+    genename <- strsplit(gene_list_false[g],'_')[[1]][2]
+    fasta_FALSE<-read.FASTA(gene_list_false[g])
+    n_out<-length(fasta_FALSE)
+    if (genename %in% genelist){
+      df$n_outside <- ifelse(df$gene == genename, n_out, df$n_outside)
+    }
+    else if (!genename %in% genelist){
+      df <- rbind(df, c(genename, NA,NA))
+      df$n_outside <- ifelse(df$gene == genename, n_out, df$n_outside)
+    }
+   #write appended results here
+    write.csv(data.frame(df),file=paste(f,"samplesize.txt",sep="_"), quote=F)
+    }
+    }, error=function(e){ print("no individuals in or out")} )
+}
+
+
+
+
+  
+
+
+
